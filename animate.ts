@@ -9,7 +9,6 @@ export function animate(initialPosition: string, speed: number): string[] {
     throw new Error('Speed should be a positive number')
   }
 
-  console.log(`INITIAL INPUT\n${initialPosition}, speed=${speed}\n`)
   let positions: string[] = []
 
   // 1. parse the initial string to get the initial position, speed, and direction.
@@ -27,7 +26,7 @@ export function animate(initialPosition: string, speed: number): string[] {
   // We could let it run infinitely since it will always break as long as speed >= 1
   // but this feels safer and basically does the same thing.
   const maxRuns = initialPosition.length
-  while (time < maxRuns) {
+  while (time <= maxRuns) {
     const newParticles = updateParticles(particleMap, maxRuns, time)
     // if all the particles are dots, we're done
     positions.push(newParticles)
@@ -35,8 +34,6 @@ export function animate(initialPosition: string, speed: number): string[] {
 
     if (newParticles.match(/^\.+$/)) {
       break
-    } else {
-      console.log('got', newParticles)
     }
   }
 
@@ -45,8 +42,6 @@ export function animate(initialPosition: string, speed: number): string[] {
   // When do we stop?
   // when the position of all particles is > the size of the initial string
   // or the position of all particles is < 0 (the beginning)
-
-  console.log('FINAL OUTPUT\n', positions)
   return positions
 }
 
