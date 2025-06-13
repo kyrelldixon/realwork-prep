@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { unusedLetters } from ".";
+import { unusedLetters } from "./unusedLetters";
 
 describe("unused letters", () => {
   it("should return the unused letters", () => {
