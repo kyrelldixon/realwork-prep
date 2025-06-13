@@ -13,40 +13,24 @@ export function animate(initialPosition: string, speed: number): string[] {
     throw new Error('Speed should be a positive number')
   }
 
-  let positions: string[] = []
+  const particles = parseInitialPosition(initialPosition, speed);
+  const chamberLength = initialPosition.length;
+  const result: string[] = [];
 
-  // 1. parse the initial string to get the initial position, speed, and direction.
-  // we can just do velocity and use positive & negative for direction
-  // I have to loop through the string once to get all the positions for sure.
-  const particleMap = parseInitialPosition(initialPosition, speed)
+  // Calculate maximum time needed for all particles to exit
+  const maxTime = calculateMaxExitTime(particles, chamberLength, speed);
 
-  // 2. calculate the next position in the string
-  // this could just be velocity * time. that would make it easier to calculate
-  // the positions for any time period and allows time traveling
-  // do we create new particles each time we update or no? i feel this makes things easier at the
-  // cost of space complexity, but I'm fine with that for v1
+  for (let time = 0; time <= maxTime; time++) {
+    const currentState = generateStateAtTime(particles, chamberLength, time);
+    result.push(currentState);
 
-  let time = 0
-  // We could let it run infinitely since it will always break as long as speed >= 1
-  // but this feels safer and basically does the same thing.
-  const maxRuns = initialPosition.length
-  while (time <= maxRuns) {
-    const newParticles = updateParticles(particleMap, maxRuns, time)
-    // if all the particles are dots, we're done
-    positions.push(newParticles)
-    time++
-
-    if (newParticles.match(/^\.+$/)) {
+    // Early exit if chamber is empty
+    if (currentState.match(/^\.+$/)) {
       break
     }
   }
 
-  // 3. create a new string with updated positions and add to the array
-
-  // When do we stop?
-  // when the position of all particles is > the size of the initial string
-  // or the position of all particles is < 0 (the beginning)
-  return positions
+  return result;
 }
 
 function parseInitialPosition(initialPosition: string, speed: number): ParticleMap {
@@ -58,9 +42,9 @@ function parseInitialPosition(initialPosition: string, speed: number): ParticleM
     if (possibleParticle === '.') {
       continue
     } else if (possibleParticle === 'R') {
-      particleMap.set(i + 1, speed)
+      particleMap.set(i + 1, speed) // 1-indexed position, positive velocity
     } else if (possibleParticle === 'L') {
-      particleMap.set(i + 1, -speed)
+      particleMap.set(i + 1, -speed) // 1-indexed position, negative velocity
     } else {
       throw new Error('Invalid particle type')
     }
@@ -69,21 +53,28 @@ function parseInitialPosition(initialPosition: string, speed: number): ParticleM
   return particleMap
 }
 
-function updateParticles(particleMap: ParticleMap, initialLength: number, time: number): string {
-  let particles = Array.from({ length: initialLength }, () => '.')
+function calculateMaxExitTime(particles: ParticleMap, chamberLength: number, speed: number): number {
+  if (particles.size === 0) return 0;
 
-  for (const [initialPosition, velocity] of particleMap) {
-    const newPosition = initialPosition + velocity * time
+  // Worst case: particle at far end moving slowly
+  // For right-moving: starts at position 1, needs chamberLength steps to exit
+  // For left-moving: starts at position chamberLength, needs chamberLength steps to exit
+  return Math.ceil(chamberLength / speed) + 1;
+}
 
-    if (newPosition > initialLength || newPosition < 0) {
-      continue
-    } else {
-      // Subtract to get back to 0-indexed
-      particles[newPosition - 1] = 'X'
+function generateStateAtTime(particles: ParticleMap, chamberLength: number, time: number): string {
+  const positions = Array(chamberLength).fill('.');
+
+  for (const [initialPosition, velocity] of particles) {
+    const currentPosition = initialPosition + velocity * time;
+
+    // Check if particle is still within chamber bounds
+    if (currentPosition >= 1 && currentPosition <= chamberLength) {
+      positions[currentPosition - 1] = 'X'; // Convert to 0-indexed for array access
     }
   }
 
-  return particles.join('')
+  return positions.join('');
 }
 
 /**
@@ -99,4 +90,7 @@ function updateParticles(particleMap: ParticleMap, initialLength: number, time: 
  * Feels like it could prob be string in and string out...but a Map helps me think easier. I can refactor later
  * 
  * I have my particle type & parsing down, so next easiest is displaying it
+ * 
+ * Started off with a while loop which is cool, but I realized there is a clear stopping point with the
+ * other solution. Going to bring that back over here
  */
