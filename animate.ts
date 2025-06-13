@@ -1,11 +1,15 @@
-type ParticleMap = Map<number, number>
+/**
+ * 1-indexed for calculation
+ */
+type InitialPosition = number
+/**
+ * A positive or negative for speed with direction
+ */
+type Velocity = number
+type ParticleMap = Map<InitialPosition, Velocity>
 
 export function animate(initialPosition: string, speed: number): string[] {
-  // Make sure we don't have any weird initial states
-  if (speed === 0) {
-    throw new Error('This will run forever since particles cannot move')
-  }
-  if (speed < 0) {
+  if (speed <= 0) {
     throw new Error('Speed should be a positive number')
   }
 
@@ -46,7 +50,7 @@ export function animate(initialPosition: string, speed: number): string[] {
 }
 
 function parseInitialPosition(initialPosition: string, speed: number): ParticleMap {
-  const particleMap = new Map<number, number>()
+  const particleMap = new Map<InitialPosition, Velocity>()
 
   // iterate through all the spots and convert them to particles
   for (let i = 0; i < initialPosition.length; i++) {
@@ -74,6 +78,7 @@ function updateParticles(particleMap: ParticleMap, initialLength: number, time: 
     if (newPosition > initialLength || newPosition < 0) {
       continue
     } else {
+      // Subtract to get back to 0-indexed
       particles[newPosition - 1] = 'X'
     }
   }
